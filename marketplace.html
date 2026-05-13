@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scopeflix Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        .product-image {
+            width: 100%;
+            height: 180px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .product-price {
+            color: #667eea;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .product-seller {
+            font-size: 12px;
+            color: #666;
+        }
+        .business-dashboard {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 500px;
+            max-width: 90%;
+            padding: 20px;
+        }
+        .back-btn {
+            background: #ff9800;
+            margin: 20px;
+        }
+        .product-list {
+            margin-top: 20px;
+        }
+        .product-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛍️ Scopeflix Marketplace</h1>
+        <p>Secure shopping with escrow protection</p>
+    </div>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('marketplace')">🏪 Marketplace</button>
+            <button class="tab" onclick="showTab('business')">🏢 My Business</button>
+            <button class="tab" onclick="showTab('orders')">📦 My Orders</button>
+        </div>
+        
+        <!-- Marketplace Tab -->
+        <div id="marketplaceTab">
+            <input type="text" id="search" placeholder="Search products..." onkeyup="searchProducts()" style="margin-bottom: 20px;">
+            <div id="productsGrid" class="product-grid"></div>
+        </div>
+        
+        <!-- Business Tab -->
+        <div id="businessTab" style="display: none;">
+            <div id="businessInfo"></div>
+            <div id="noBusiness" style="display: none; text-align: center; padding: 40px;">
+                <h3>No Business Registered</h3>
+                <p>Register your business to start selling</p>
+                <button onclick="window.location.href='/chat.html'" style="background: #ff9800;">Go to Chat to Register</button>
+            </div>
+            <div id="businessDashboard" style="display: none;">
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="productCount">0</div>
+                        <div>Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="orderCount">0</div>
+                        <div>Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalSales">$0</div>
+                        <div>Total Sales</div>
+                    </div>
+                </div>
+                <button onclick="showAddProduct()">+ Add Product</button>
+                <div id="productsList" class="product-list"></div>
+                <div id="ordersList" class="product-list"></div>
+            </div>
+        </div>
+        
+        <!-- Orders Tab -->
+        <div id="ordersTab" style="display: none;">
+            <div id="userOrdersList"></div>
+        </div>
+    </div>
+    
+    <div style="text-align: center;">
+        <a href="/chat.html"><button class="back-btn">← Back to Chat</button></a>
+        <a href="/animation.html"><button>🎨 AI Studio</button></a>
+        <a href="/converter.html"><button>🔄 Converter</button></a>
+    </div>
+    
+    <!-- Add Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Product</h3>
+            <input type="text" id="productName" placeholder="Product Name">
+            <textarea id="productDesc" rows="3" placeholder="Description"></textarea>
+            <input type="number" id="productPrice" placeholder="Price ($)">
+            <input type="number" id="productStock" placeholder="Stock Quantity">
+            <select id="productCategory">
+                <option value="electronics">Electronics</option>
+                <option value="fashion">Fashion</option>
+                <option value="food">Food</option>
+                <option value="services">Services</option>
+                <option value="digital">Digital</option>
+            </select>
+            <input type="file" id="productImages" multiple accept="image/*">
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="closeProductModal()">Cancel</button>
+                <button onclick="addProduct()" style="background: #4caf50;">Add Product</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Product Modal -->
+    <div id="viewProductModal" class="modal">
+        <div class="modal-content">
+            <h3 id="viewProductName"></h3>
+            <div id="viewProductImage" style="text-align: center; font-size: 48px; padding: 20px;">📦</div>
+            <p id="viewProductDesc"></p>
+            <p><strong>Price: $<span id="viewProductPrice"></span></strong> <span style="background:#4caf50; color:white; padding:2px 8px; border-radius:10px; font-size:10px;">🛡️ Escrow Protected</span></p>
+            <p>Stock: <span id="viewProductStock"></span></p>
+            <input type="number" id="buyQuantity" value="1" min="1">
+            <button onclick="buyProduct()" style="background: #4caf50; width: 100%; margin-top: 10px;">Buy Now</button>
+            <button onclick="closeViewProductModal()" style="margin-top: 10px;">Close</button>
+        </div>
+    </div>
+    
+    <!-- Confirm Delivery Modal -->
+    <div id="deliveryModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Delivery</h3>
+            <p>Enter the delivery code provided by the seller:</p>
+            <input type="text" id="deliveryCode" placeholder="6-digit code" maxlength="6">
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="closeDeliveryModal()">Cancel</button>
+                <button onclick="confirmDelivery()" style="background: #4caf50;">Confirm & Release Payment</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let currentUser = null;
+        let allProducts = [];
+        let currentBusiness = null;
+        let selectedProduct = null;
+        let currentOrder = null;
+        
+        const saved = localStorage.getItem('user');
+        if (!saved) {
+            alert('Please login from chat first');
+            window.location.href = '/chat.html';
+        } else {
+            currentUser = JSON.parse(saved);
+            loadProducts();
+            loadBusiness();
+            loadOrders();
+        }
+        
+        async function loadProducts() {
+            const res = await fetch('/api/products');
+            allProducts = await res.json();
+            displayProducts(allProducts);
+        }
+        
+        function displayProducts(products) {
+            const grid = document.getElementById('productsGrid');
+            if (products.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; padding:40px;">No products yet</div>';
+                return;
+            }
+            grid.innerHTML = products.map(p => `
+                <div class="product-card" onclick="viewProduct('${p.id}')">
+                    <div class="product-image">📦</div>
+                    <div class="product-info">
+                        <div class="product-name">${escapeHtml(p.name)}</div>
+                        <div class="product-price">$${p.price}</div>
+                        <div class="product-seller">by ${escapeHtml(p.businessName)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function searchProducts() {
+            const term = document.getElementById('search').value.toLowerCase();
+            const filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(term) || 
+                p.description.toLowerCase().includes(term)
+            );
+            displayProducts(filtered);
+        }
+        
+        function viewProduct(productId) {
+            selectedProduct = allProducts.find(p => p.id === productId);
+            if (selectedProduct) {
+                document.getElementById('viewProductName').innerHTML = selectedProduct.name;
+                document.getElementById('viewProductDesc').innerHTML = selectedProduct.description;
+                document.getElementById('viewProductPrice').innerHTML = selectedProduct.price;
+                document.getElementById('viewProductStock').innerHTML = selectedProduct.stock;
+                document.getElementById('viewProductModal').style.display = 'flex';
+            }
+        }
+        
+        function closeViewProductModal() {
+            document.getElementById('viewProductModal').style.display = 'none';
+        }
+        
+        async function buyProduct() {
+            const quantity = parseInt(document.getElementById('buyQuantity').value);
+            if (quantity > selectedProduct.stock) {
+                alert('Not enough stock');
+                return;
+            }
+            
+            const res = await fetch('/api/order/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    buyerId: currentUser.id,
+                    productId: selectedProduct.id,
+                    quantity: quantity
+                })
+            });
+            
+            const result = await res.json();
+            if (result.success) {
+                currentOrder = result.order;
+                alert(`✅ Order created!\n\nOrder ID: ${currentOrder.id}\nTotal: $${currentOrder.totalAmount}\n\n💰 Payment held in escrow.\n📦 Seller will ship your order.\n\nDelivery Code for Seller: ${currentOrder.deliveryCode}`);
+                closeViewProductModal();
+                loadOrders();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        }
+        
+        async function loadBusiness() {
+            const res = await fetch(`/api/business/${currentUser.id}`);
+            currentBusiness = await res.json();
+            
+            if (currentBusiness) {
+                document.getElementById('noBusiness').style.display = 'none';
+                document.getElementById('businessDashboard').style.display = 'block';
+                document.getElementById('businessInfo').innerHTML = `
+                    <div class="business-dashboard">
+                        <h3>🏢 ${escapeHtml(currentBusiness.businessName)}</h3>
+                        <p>📍 ${escapeHtml(currentBusiness.location)}</p>
+                        <p>${currentBusiness.verified ? '✅ Verified Business' : '⏳ Pending Verification'}</p>
+                    </div>
+                `;
+                loadBusinessProducts();
+                loadSellerOrders();
+            } else {
+                document.getElementById('noBusiness').style.display = 'block';
+                document.getElementById('businessDashboard').style.display = 'none';
+            }
+        }
+        
+        async function loadBusinessProducts() {
+            const res = await fetch(`/api/business/${currentBusiness?.id}/products`);
+            const products = await res.json();
+            document.getElementById('productCount').innerHTML = products.length;
+            document.getElementById('productsList').innerHTML = products.map(p => `
+                <div class="product-item">
+                    <div>
+                        <strong>${escapeHtml(p.name)}</strong><br>
+                        $${p.price} | Stock: ${p.stock}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadSellerOrders() {
+            const res = await fetch(`/api/orders/seller/${currentBusiness?.id}`);
+            const sellerOrders = await res.json();
+            document.getElementById('orderCount').innerHTML = sellerOrders.length;
+            const total = sellerOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+            document.getElementById('totalSales').innerHTML = `$${total.toFixed(2)}`;
+            document.getElementById('ordersList').innerHTML = sellerOrders.map(o => `
+                <div class="product-item">
+                    <div>
+                        <strong>Order #${o.id}</strong><br>
+                        Product: ${escapeHtml(o.productName)} x${o.quantity}<br>
+                        Total: $${o.totalAmount}<br>
+                        Status: ${o.status}
+                        ${o.status === 'pending' ? `<div>Delivery Code: <strong>${o.deliveryCode}</strong> (Share with buyer)</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadOrders() {
+            const res = await fetch(`/api/orders/user/${currentUser.id}`);
+            const userOrders = await res.json();
+            const container = document.getElementById('userOrdersList');
+            if (userOrders.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px;">No orders yet</div>';
+                return;
+            }
+            container.innerHTML = userOrders.map(o => `
+                <div class="product-item">
+                    <div>
+                        <strong>Order #${o.id}</strong><br>
+                        Product: ${escapeHtml(o.productName)} x${o.quantity}<br>
+                        Total: $${o.totalAmount}<br>
+                        Status: ${o.status}
+                        ${o.status === 'pending' ? `<div>Delivery Code: ${o.deliveryCode}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showAddProduct() {
+            document.getElementById('productModal').style.display = 'flex';
+        }
+        
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+        }
+        
+        async function addProduct() {
+            const formData = new FormData();
+            formData.append('businessId', currentBusiness.id);
+            formData.append('name', document.getElementById('productName').value);
+            formData.append('description', document.getElementById('productDesc').value);
+            formData.append('price', document.getElementById('productPrice').value);
+            formData.append('stock', document.getElementById('productStock').value);
+            formData.append('category', document.getElementById('productCategory').value);
+            
+            const files = document.getElementById('productImages').files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+            
+            const res = await fetch('/api/business/product', { method: 'POST', body: formData });
+            const result = await res.json();
+            if (result.success) {
+                alert('✅ Product added!');
+                closeProductModal();
+                loadBusinessProducts();
+                loadProducts();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('marketplaceTab').style.display = tab === 'marketplace' ? 'block' : 'none';
+            document.getElementById('businessTab').style.display = tab === 'business' ? 'block' : 'none';
+            document.getElementById('ordersTab').style.display = tab === 'orders' ? 'block' : 'none';
+            if (tab === 'orders') loadOrders();
+        }
+        
+        function closeDeliveryModal() {
+            document.getElementById('deliveryModal').style.display = 'none';
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

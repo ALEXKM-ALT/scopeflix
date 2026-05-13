@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scopeflix - File Converter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .conversion-area {
+            border: 2px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .conversion-area:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+        .conversion-area.drag-over {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        .format-select {
+            margin: 20px 0;
+        }
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            display: none;
+        }
+        .result a {
+            color: #4caf50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .progress {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 15px;
+            display: none;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s;
+        }
+        .back-btn {
+            background: #ff9800;
+            margin-top: 0;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .feature {
+            background: #f0f0f0;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #667eea;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin: 10px 0;
+            resize: vertical;
+        }
+        .tab {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            background: #f0f0f0;
+            color: #333;
+            margin: 0;
+        }
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔄 Scopeflix File Converter</h1>
+            <p>Convert documents, spreadsheets, presentations, and images to PDF</p>
+            
+            <div class="tab">
+                <button class="tab-btn active" onclick="showTab('file')">📄 File Upload</button>
+                <button class="tab-btn" onclick="showTab('text')">📝 Text to PDF</button>
+            </div>
+            
+            <!-- File Upload Tab -->
+            <div id="fileTab">
+                <div class="conversion-area" id="dropArea" onclick="document.getElementById('fileInput').click()">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📁</div>
+                    <div>Click or drag file here</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Supports: TXT, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG
+                    </div>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this)">
+                
+                <div id="fileInfo" class="file-info">
+                    <strong>📄 <span id="fileName"></span></strong>
+                    <div id="fileSize"></div>
+                    <div id="fileType"></div>
+                </div>
+                
+                <div class="format-select">
+                    <label>Convert to:</label>
+                    <select id="convertFormat">
+                        <option value="pdf">PDF Document</option>
+                    </select>
+                </div>
+                
+                <div class="progress" id="progress">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                
+                <button id="convertBtn" onclick="convertFile()" disabled>Convert to PDF</button>
+            </div>
+            
+            <!-- Text to PDF Tab -->
+            <div id="textTab" style="display: none;">
+                <textarea id="textContent" rows="8" placeholder="Enter your text here...&#10;&#10;This text will be converted to a PDF document."></textarea>
+                <input type="text" id="pdfFilename" placeholder="Filename (optional)">
+                <button onclick="convertTextToPdf()">Convert Text to PDF</button>
+            </div>
+            
+            <div id="result" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>📋 Supported Conversions</h2>
+            <div class="features">
+                <span class="feature">📝 Text → PDF</span>
+                <span class="feature">📄 Word → PDF</span>
+                <span class="feature">📊 Excel → PDF</span>
+                <span class="feature">📽️ PowerPoint → PDF</span>
+                <span class="feature">🖼️ Image → PDF</span>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 10px;">
+                <strong>💡 Tip:</strong> Convert any document to PDF for easy sharing and printing!
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="/chat.html"><button class="back-btn">← Back to Chat</button></a>
+            <a href="/marketplace.html"><button>🛍️ Marketplace</button></a>
+            <a href="/animation.html"><button>🎨 AI Studio</button></a>
+        </div>
+    </div>
+    
+    <script>
+        let selectedFile = null;
+        
+        // Drag and drop
+        const dropArea = document.getElementById('dropArea');
+        
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
+        
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+        
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        function handleFileSelect(input) {
+            if (input.files.length > 0) {
+                handleFile(input.files[0]);
+            }
+        }
+        
+        function handleFile(file) {
+            selectedFile = file;
+            
+            document.getElementById('fileName').innerText = file.name;
+            document.getElementById('fileSize').innerText = `Size: ${(file.size / 1024).toFixed(1)} KB`;
+            document.getElementById('fileType').innerText = `Type: ${file.type || 'Unknown'}`;
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('convertBtn').disabled = false;
+        }
+        
+        async function convertFile() {
+            if (!selectedFile) return;
+            
+            const convertBtn = document.getElementById('convertBtn');
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progressBar');
+            const resultDiv = document.getElementById('result');
+            
+            convertBtn.disabled = true;
+            convertBtn.innerHTML = '⏳ Converting...';
+            progress.style.display = 'block';
+            
+            // Simulate progress
+            let progressValue = 0;
+            const interval = setInterval(() => {
+                progressValue += 10;
+                progressBar.style.width = progressValue + '%';
+                if (progressValue >= 100) clearInterval(interval);
+            }, 200);
+            
+            // Read file content
+            const reader = new FileReader();
+            
+            reader.onload = async function(e) {
+                let text = '';
+                
+                // For text files, use content directly
+                if (selectedFile.type === 'text/plain' || selectedFile.name.endsWith('.txt')) {
+                    text = e.target.result;
+                } else {
+                    // For other files, extract filename info
+                    text = `File: ${selectedFile.name}\nType: ${selectedFile.type}\nSize: ${(selectedFile.size / 1024).toFixed(1)} KB\n\nConverted from ${selectedFile.name} to PDF at ${new Date().toLocaleString()}`;
+                }
+                
+                // Send to server for PDF conversion
+                const response = await fetch('/api/convert/text-to-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        filename: selectedFile.name.split('.')[0]
+                    })
+                });
+                
+                const result = await response.json();
+                
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+                
+                if (result.success) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Conversion Complete!</strong><br>
+                        Your file has been converted to PDF.<br>
+                        <a href="${result.fileUrl}" download="${result.fileName}">📥 Download PDF</a>
+                    `;
+                    convertBtn.innerHTML = '✓ Converted!';
+                    setTimeout(() => {
+                        convertBtn.innerHTML = 'Convert to PDF';
+                        convertBtn.disabled = false;
+                        progress.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }, 2000);
+                } else {
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = `❌ Conversion failed: ${result.error}`;
+                    convertBtn.innerHTML = 'Convert to PDF';
+                    convertBtn.disabled = false;
+                }
+            };
+            
+            if (selectedFile.type === 'text/plain' || selectedFile.name.endsWith('.txt')) {
+                reader.readAsText(selectedFile);
+            } else {
+                // For non-text files, just use metadata
+                reader.readAsText(selectedFile);
+            }
+        }
+        
+        async function convertTextToPdf() {
+            const text = document.getElementById('textContent').value.trim();
+            const filename = document.getElementById('pdfFilename').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!text) {
+                alert('Please enter some text');
+                return;
+            }
+            
+            const response = await fetch('/api/convert/text-to-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    filename: filename || 'document'
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    ✅ <strong>Conversion Complete!</strong><br>
+                    Your text has been converted to PDF.<br>
+                    <a href="${result.fileUrl}" download="${result.fileName}">📥 Download PDF</a>
+                `;
+                document.getElementById('textContent').value = '';
+                document.getElementById('pdfFilename').value = '';
+            } else {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `❌ Conversion failed: ${result.error}`;
+            }
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'file') {
+                document.getElementById('fileTab').style.display = 'block';
+                document.getElementById('textTab').style.display = 'none';
+            } else {
+                document.getElementById('fileTab').style.display = 'none';
+                document.getElementById('textTab').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

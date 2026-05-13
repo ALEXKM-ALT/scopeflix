@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Status</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Status Test</h1>
+    <button onclick="postTestStatus()">Post Test Status</button>
+    <div id="result"></div>
+    <script>
+        const socket = io();
+        let user = { id: "test123", name: "Tester", avatar: "T" };
+        
+        socket.emit('user-join', user);
+        
+        socket.on('existing-statuses', (statuses) => {
+            document.getElementById('result').innerHTML += `<p>Loaded ${statuses.length} existing statuses</p>`;
+        });
+        
+        socket.on('new-status', (status) => {
+            document.getElementById('result').innerHTML += `<p>NEW STATUS: ${status.userName}: ${status.content}</p>`;
+        });
+        
+        function postTestStatus() {
+            socket.emit('post-status', {
+                userId: user.id,
+                userName: user.name,
+                userAvatar: user.avatar,
+                type: 'text',
+                content: 'Test status at ' + new Date().toLocaleTimeString(),
+                backgroundColor: '#0084ff'
+            });
+            document.getElementById('result').innerHTML += `<p>Posted test status!</p>`;
+        }
+    </script>
+</body>
+</html>

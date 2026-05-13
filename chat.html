@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scopeflix - Complete Chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+        }
+        .app {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message.sent {
+            background: #0084ff;
+            color: white;
+            margin-left: auto;
+        }
+        .message.received {
+            background: white;
+            border: 1px solid #ddd;
+            color: black;
+        }
+        .message-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .message-file {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px;
+        }
+        .voice-note {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .voice-play {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #0084ff;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #ddd;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+        }
+        .action-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+        .action-btn.recording {
+            background: #ff4444;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .send-btn {
+            padding: 12px 24px;
+            background: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+        .user, .group-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f0f0f0;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .user:hover, .group-item:hover { background: #e0e0e0; }
+        .user-info {
+            background: #0084ff;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .call-buttons {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+        .call-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .call-btn.video { background: #2196f3; }
+        .logout {
+            margin-top: auto;
+            padding: 12px;
+            background: #f44336;
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .status-section, .groups-section {
+            margin-bottom: 20px;
+        }
+        .status-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .create-group-btn {
+            width: 100%;
+            padding: 8px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .marketplace-btn, .animation-btn {
+            margin-top: 5px;
+        }
+        .status-list {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+        }
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            min-width: 60px;
+        }
+        .status-ring {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #0084ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 350px;
+            padding: 20px;
+        }
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        .recording-status {
+            font-size: 12px;
+            color: #ff4444;
+            text-align: center;
+            margin-top: 5px;
+        }
+        video {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 10px;
+        }
+        .call-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1a1a2e;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+        }
+        .call-videos {
+            flex: 1;
+            display: flex;
+            position: relative;
+            padding: 20px;
+        }
+        .remote-video {
+            flex: 1;
+            background: #16213e;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .remote-video video {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            object-fit: cover;
+        }
+        .local-video {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: #0f3460;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid white;
+        }
+        .local-video video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .call-controls {
+            padding: 20px;
+            background: #0f3460;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .call-control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .call-control-btn.end { background: #f44336; color: white; }
+        .call-control-btn.mic { background: #4caf50; }
+        .call-control-btn.video { background: #2196f3; }
+        .incoming-call {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 2001;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="sidebar">
+            <div class="user-info" id="userInfo">Loading...</div>
+            
+            <div class="status-section">
+                <div class="status-title">📸 STATUS</div>
+                <div class="status-list" id="statusList">
+                    <div class="status-item" onclick="openStatusModal()">
+                        <div class="status-ring"><div class="status-avatar">+</div></div>
+                        <span>My Status</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="groups-section">
+                <div class="status-title">👥 GROUPS</div>
+                <button class="create-group-btn" onclick="openGroupModal()">+ New Group</button>
+                <div id="groupsList"></div>
+            </div>
+            
+            <div class="status-title">💬 CONTACTS</div>
+            <div id="usersList"></div>
+            
+            <button class="create-group-btn marketplace-btn" onclick="window.location.href='/marketplace.html'" style="background:#ff9800;">🛍️ Marketplace</button>
+            <button class="create-group-btn animation-btn" onclick="window.location.href='/animation.html'" style="background:#9c27b0;">🎨 AI Studio</button>
+            
+            <div class="logout" onclick="logout()">🚪 Logout</div>
+        </div>
+        
+        <div class="chat-main">
+            <div class="messages" id="messages">
+                <div style="text-align:center; color:#999; padding:20px;">Select a user or group to chat</div>
+            </div>
+            <div class="input-area" id="inputArea" style="display: none;">
+                <div class="input-row">
+                    <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button class="action-btn" onclick="document.getElementById('fileInput').click()" title="Send File">📎</button>
+                    <button class="action-btn" id="voiceBtn" onclick="toggleVoiceRecording()" title="Voice Note">🎤</button>
+                    <button class="action-btn" id="videoRecordBtn" onclick="toggleVideoRecording()" title="Record Video">📹</button>
+                    <button class="send-btn" onclick="sendMessage()">Send</button>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" onchange="sendFile(this)">
+                <div id="recordingStatus" class="recording-status" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Video Call Modal -->
+    <div id="callModal" class="call-modal">
+        <div class="call-videos">
+            <div class="remote-video">
+                <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+            <div class="local-video">
+                <video id="localVideo" autoplay playsinline muted></video>
+            </div>
+        </div>
+        <div class="call-controls">
+            <button class="call-control-btn mic" onclick="toggleMic()">🎤</button>
+            <button class="call-control-btn video" onclick="toggleCamera()">📹</button>
+            <button class="call-control-btn end" onclick="endCall()">🔴</button>
+        </div>
+    </div>
+    
+    <div id="incomingCall" class="incoming-call"></div>
+    
+    <!-- Status Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <h3>Add to Status</h3>
+            <textarea id="statusText" rows="3" placeholder="What's on your mind?"></textarea>
+            <button onclick="postStatus()" style="background:#0084ff;">Share</button>
+            <button onclick="closeStatusModal()">Cancel</button>
+        </div>
+    </div>
+    
+    <!-- Group Modal -->
+    <div id="groupModal" class="modal">
+        <div class="modal-content">
+            <h3>Create Group</h3>
+            <input type="text" id="groupName" placeholder="Group Name">
+            <div id="groupMembersList"></div>
+            <button onclick="createGroup()" style="background:#4caf50;">Create</button>
+            <button onclick="closeGroupModal()">Cancel</button>
+        </div>
+    </div>
+    
+    <audio id="audioPlayer"></audio>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentUser = null;
+        let activeChat = null;
+        let activeChatType = null;
+        let allUsers = [];
+        let groups = [];
+        let allStatuses = [];
+        
+        // Media Recording
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let videoChunks = [];
+        let isRecording = false;
+        let recordingType = null;
+        
+        // WebRTC Call
+        let localStream = null;
+        let peerConnection = null;
+        let pendingCaller = null;
+        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        
+        const saved = localStorage.getItem('user');
+        if (!saved) {
+            window.location.href = '/';
+        } else {
+            currentUser = JSON.parse(saved);
+            document.getElementById('userInfo').innerHTML = `<strong>${currentUser.name}</strong><br>🟢 Online`;
+            socket.emit('user-join', currentUser);
+        }
+        
+        // ============ USER LIST ============
+        socket.on('users-list', (users) => {
+            allUsers = users;
+            const others = users.filter(u => u.id !== currentUser?.id);
+            const container = document.getElementById('usersList');
+            if (others.length === 0) {
+                container.innerHTML = '<div style="color:#999;">No users online</div>';
+            } else {
+                container.innerHTML = others.map(user => `
+                    <div class="user" onclick="selectChat('${user.id}', '${user.name}', 'user')">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div><strong>${user.name}</strong><br>🟢 Online</div>
+                            <div class="call-buttons">
+                                <button class="call-btn video" onclick="event.stopPropagation(); startVideoCall('${user.id}', '${user.name}')">🎥</button>
+                                <button class="call-btn" onclick="event.stopPropagation(); startAudioCall('${user.id}', '${user.name}')">📞</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        });
+        
+        // ============ PRIVATE CHAT ============
+        socket.on('new-message', (msg) => {
+            if (activeChatType === 'user' && (activeChat === msg.senderId || activeChat === msg.receiverId)) {
+                addMessage(msg);
+            }
+        });
+        
+        function selectChat(id, name, type) {
+            activeChat = id;
+            activeChatType = type;
+            document.getElementById('inputArea').style.display = 'flex';
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content || !activeChat) return;
+            
+            if (activeChatType === 'user') {
+                const msg = { senderId: currentUser.id, senderName: currentUser.name, receiverId: activeChat, content: content };
+                socket.emit('send-message', msg);
+                addMessage({ ...msg, sent: true });
+            } else if (activeChatType === 'group') {
+                socket.emit('send-group-message', { groupId: activeChat, senderId: currentUser.id, senderName: currentUser.name, content: content });
+            }
+            input.value = '';
+        }
+        
+        function addMessage(msg) {
+            const container = document.getElementById('messages');
+            const isSent = msg.senderId === currentUser?.id;
+            if (container.innerHTML.includes('Select a user')) container.innerHTML = '';
+            const div = document.createElement('div');
+            div.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            let contentHtml = msg.content;
+            if (msg.type === 'image') {
+                contentHtml = `<img src="${msg.content}" class="message-image" onclick="window.open(this.src)">`;
+            } else if (msg.type === 'file') {
+                contentHtml = `<div class="message-file">📄 ${msg.fileName} <a href="${msg.content}" download>⬇️</a></div>`;
+            } else if (msg.type === 'voice') {
+                contentHtml = `<div class="voice-note"><button class="voice-play" onclick="playAudio('${msg.content}')">▶</button> 🎤 Voice Note</div>`;
+            } else if (msg.type === 'video') {
+                contentHtml = `<video src="${msg.content}" controls></video>`;
+            }
+            
+            div.innerHTML = `<strong>${msg.senderName || (isSent ? 'You' : 'User')}:</strong><br>${contentHtml}<div style="font-size:10px; margin-top:5px;">${new Date().toLocaleTimeString()}</div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // ============ FILE SHARING ============
+        async function sendFile(input) {
+            const file = input.files[0];
+            if (!file || !activeChat || activeChatType !== 'user') return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'chat');
+            
+            const res = await fetch('/upload', { method: 'POST', body: formData });
+            const result = await res.json();
+            
+            if (result.success) {
+                const msg = {
+                    senderId: currentUser.id,
+                    senderName: currentUser.name,
+                    receiverId: activeChat,
+                    type: file.type.startsWith('image/') ? 'image' : 'file',
+                    content: result.fileUrl,
+                    fileName: result.fileName
+                };
+                socket.emit('send-message', msg);
+                addMessage({ ...msg, sent: true });
+            }
+            input.value = '';
+        }
+        
+        // ============ VOICE RECORDING ============
+        async function toggleVoiceRecording() {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    recordingType = 'voice';
+                    
+                    mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                    mediaRecorder.onstop = async () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const fd = new FormData();
+                        fd.append('file', blob, 'voice.webm');
+                        fd.append('type', 'chat');
+                        const res = await fetch('/upload', { method: 'POST', body: fd });
+                        const result = await res.json();
+                        if (result.success && activeChat && activeChatType === 'user') {
+                            const msg = { senderId: currentUser.id, senderName: currentUser.name, receiverId: activeChat, type: 'voice', content: result.fileUrl };
+                            socket.emit('send-message', msg);
+                            addMessage({ ...msg, sent: true });
+                        }
+                        stream.getTracks().forEach(t => t.stop());
+                        document.getElementById('voiceBtn').classList.remove('recording');
+                        document.getElementById('recordingStatus').style.display = 'none';
+                        isRecording = false;
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('voiceBtn').classList.add('recording');
+                    document.getElementById('recordingStatus').style.display = 'block';
+                    document.getElementById('recordingStatus').innerHTML = '🔴 Recording voice... Click again to stop';
+                } catch (err) { alert('Microphone access denied'); }
+            } else {
+                if (mediaRecorder) mediaRecorder.stop();
+            }
+        }
+        
+        // ============ VIDEO RECORDING ============
+        async function toggleVideoRecording() {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    videoChunks = [];
+                    recordingType = 'video';
+                    
+                    mediaRecorder.ondataavailable = (e) => videoChunks.push(e.data);
+                    mediaRecorder.onstop = async () => {
+                        const blob = new Blob(videoChunks, { type: 'video/webm' });
+                        const fd = new FormData();
+                        fd.append('file', blob, 'video.webm');
+                        fd.append('type', 'chat');
+                        const res = await fetch('/upload', { method: 'POST', body: fd });
+                        const result = await res.json();
+                        if (result.success && activeChat && activeChatType === 'user') {
+                            const msg = { senderId: currentUser.id, senderName: currentUser.name, receiverId: activeChat, type: 'video', content: result.fileUrl };
+                            socket.emit('send-message', msg);
+                            addMessage({ ...msg, sent: true });
+                        }
+                        stream.getTracks().forEach(t => t.stop());
+                        document.getElementById('videoRecordBtn').classList.remove('recording');
+                        document.getElementById('recordingStatus').style.display = 'none';
+                        isRecording = false;
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('videoRecordBtn').classList.add('recording');
+                    document.getElementById('recordingStatus').style.display = 'block';
+                    document.getElementById('recordingStatus').innerHTML = '🔴 Recording video... Click again to stop';
+                } catch (err) { alert('Camera access denied'); }
+            } else {
+                if (mediaRecorder) mediaRecorder.stop();
+            }
+        }
+        
+        function playAudio(url) {
+            const audio = document.getElementById('audioPlayer');
+            audio.src = url;
+            audio.play();
+        }
+        
+        // ============ VIDEO CALLS ============
+        async function startVideoCall(userId, userName) {
+            activeChat = userId;
+            await startCall(userId, 'video');
+        }
+        
+        async function startAudioCall(userId, userName) {
+            activeChat = userId;
+            await startCall(userId, 'audio');
+        }
+        
+        async function startCall(userId, type) {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+                document.getElementById('callModal').style.display = 'flex';
+                
+                peerConnection = new RTCPeerConnection(config);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                
+                peerConnection.onicecandidate = (e) => {
+                    if (e.candidate) socket.emit('ice-candidate', { candidate: e.candidate, to: userId });
+                };
+                peerConnection.ontrack = (e) => {
+                    document.getElementById('remoteVideo').srcObject = e.streams[0];
+                };
+                
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('offer', { offer, to: userId });
+                socket.emit('call-user', { callerId: currentUser.id, callerName: currentUser.name, receiverId: userId, type });
+            } catch (err) { alert('Camera/microphone access denied'); }
+        }
+        
+        socket.on('incoming-call', (data) => {
+            pendingCaller = data;
+            const div = document.getElementById('incomingCall');
+            div.innerHTML = `
+                <strong>📞 ${data.callerName} is calling (${data.type})</strong>
+                <div style="margin-top:10px;">
+                    <button onclick="acceptCall()" style="background:#4caf50; color:white; padding:10px;">Accept</button>
+                    <button onclick="rejectCall()" style="background:#f44336; color:white; padding:10px;">Reject</button>
+                </div>
+            `;
+            div.style.display = 'block';
+        });
+        
+        async function acceptCall() {
+            if (!pendingCaller) return;
+            document.getElementById('incomingCall').style.display = 'none';
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: pendingCaller.type === 'video', audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+                document.getElementById('callModal').style.display = 'flex';
+                
+                peerConnection = new RTCPeerConnection(config);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                peerConnection.onicecandidate = (e) => {
+                    if (e.candidate) socket.emit('ice-candidate', { candidate: e.candidate, to: pendingCaller.callerId });
+                };
+                peerConnection.ontrack = (e) => {
+                    document.getElementById('remoteVideo').srcObject = e.streams[0];
+                };
+                socket.emit('accept-call', { callerId: pendingCaller.callerId, receiverId: currentUser.id });
+            } catch (err) { console.error(err); }
+        }
+        
+        function rejectCall() {
+            if (pendingCaller) {
+                socket.emit('reject-call', { callerId: pendingCaller.callerId });
+                document.getElementById('incomingCall').style.display = 'none';
+            }
+        }
+        
+        socket.on('offer', async (data) => {
+            if (peerConnection) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.emit('answer', { answer, to: data.from });
+            }
+        });
+        
+        socket.on('answer', async (data) => {
+            if (peerConnection) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            }
+        });
+        
+        socket.on('ice-candidate', async (data) => {
+            if (peerConnection && data.candidate) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
+        
+        socket.on('call-ended', () => endCall());
+        
+        function toggleMic() {
+            if (localStream) {
+                const track = localStream.getAudioTracks()[0];
+                track.enabled = !track.enabled;
+            }
+        }
+        
+        function toggleCamera() {
+            if (localStream) {
+                const track = localStream.getVideoTracks()[0];
+                track.enabled = !track.enabled;
+            }
+        }
+        
+        function endCall() {
+            if (peerConnection) peerConnection.close();
+            if (localStream) localStream.getTracks().forEach(t => t.stop());
+            document.getElementById('callModal').style.display = 'none';
+            peerConnection = null;
+            localStream = null;
+        }
+        
+        // ============ GROUPS ============
+        socket.on('existing-groups', (existingGroups) => { groups = existingGroups; updateGroupsList(); });
+        socket.on('groups-update', (updatedGroups) => { groups = updatedGroups; updateGroupsList(); });
+        socket.on('group-message', (data) => {
+            if (activeChatType === 'group' && activeChat === data.groupId) {
+                const isSent = data.senderId === currentUser?.id;
+                const container = document.getElementById('messages');
+                const div = document.createElement('div');
+                div.className = `message ${isSent ? 'sent' : 'received'}`;
+                div.innerHTML = `<strong>${data.senderName || (isSent ? 'You' : 'User')}:</strong><br>${data.content}<div style="font-size:10px;">${new Date().toLocaleTimeString()}</div>`;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            }
+        });
+        
+        function updateGroupsList() {
+            const container = document.getElementById('groupsList');
+            const userGroups = groups.filter(g => g.members?.some(m => m.id === currentUser?.id));
+            container.innerHTML = userGroups.map(group => `<div class="group-item" onclick="selectChat('${group.id}', '${group.name}', 'group')">👥 <strong>${group.name}</strong><div style="font-size:10px;">${group.members.length} members</div></div>`).join('');
+        }
+        
+        function openGroupModal() {
+            const membersDiv = document.getElementById('groupMembersList');
+            const otherUsers = allUsers.filter(u => u.id !== currentUser?.id);
+            membersDiv.innerHTML = '<div class="status-title">Select Members</div>';
+            otherUsers.forEach(user => { membersDiv.innerHTML += `<div><input type="checkbox" value="${user.id}"> ${user.name}</div>`; });
+            document.getElementById('groupModal').style.display = 'flex';
+        }
+        
+        function closeGroupModal() { document.getElementById('groupModal').style.display = 'none'; document.getElementById('groupName').value = ''; }
+        
+        function createGroup() {
+            const groupName = document.getElementById('groupName').value.trim();
+            const checkboxes = document.querySelectorAll('#groupMembersList input:checked');
+            const members = [{ id: currentUser.id, name: currentUser.name }];
+            checkboxes.forEach(cb => { const user = allUsers.find(u => u.id === cb.value); if (user) members.push({ id: user.id, name: user.name }); });
+            if (groupName) { socket.emit('create-group', { name: groupName, createdBy: currentUser.id, createdByName: currentUser.name, members }); closeGroupModal(); }
+        }
+        
+        // ============ STATUS ============
+        socket.on('existing-statuses', (statuses) => { allStatuses = statuses; updateStatusList(); });
+        socket.on('new-status', (status) => { allStatuses.unshift(status); updateStatusList(); });
+        
+        function updateStatusList() {
+            const container = document.getElementById('statusList');
+            const myStatuses = allStatuses.filter(s => s.userId === currentUser?.id);
+            const otherStatuses = allStatuses.filter(s => s.userId !== currentUser?.id);
+            let html = `<div class="status-item" onclick="openStatusModal()"><div class="status-ring"><div class="status-avatar">+</div></div><span>My Status</span></div>`;
+            if (myStatuses.length > 0) html += `<div class="status-item" onclick="viewStatus('${myStatuses[0].id}')"><div class="status-ring"><div class="status-avatar">${currentUser.avatar}</div></div><span>${currentUser.name}</span></div>`;
+            const uniqueUsers = new Map();
+            otherStatuses.forEach(status => { if (!uniqueUsers.has(status.userId)) uniqueUsers.set(status.userId, status); });
+            for (const [userId, status] of uniqueUsers) html += `<div class="status-item" onclick="viewStatus('${status.id}')"><div class="status-ring"><div class="status-avatar">${status.userAvatar}</div></div><span>${status.userName}</span></div>`;
+            container.innerHTML = html;
+        }
+        
+        function viewStatus(statusId) { const status = allStatuses.find(s => s.id == statusId); if (status) alert(`${status.userName}: ${status.content}`); }
+        function openStatusModal() { document.getElementById('statusModal').style.display = 'flex'; }
+        function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; document.getElementById('statusText').value = ''; }
+        function postStatus() {
+            const content = document.getElementById('statusText').value.trim();
+            if (content) { socket.emit('post-status', { userId: currentUser.id, userName: currentUser.name, userAvatar: currentUser.avatar, type: 'text', content: content }); closeStatusModal(); }
+        }
+        
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+    </script>
+</body>
+</html>
+
+<script>
+// Override group functions for better display
+function updateGroupsList() {
+    const container = document.getElementById('groupsList');
+    if (!container) return;
+    
+    const userGroups = groups.filter(g => g.members?.some(m => m.id === currentUser?.id));
+    
+    if (userGroups.length === 0) {
+        container.innerHTML = '<div style="color:#999; font-size:12px; text-align:center; padding:10px;">No groups yet. Create one!</div>';
+    } else {
+        container.innerHTML = userGroups.map(group => `
+            <div class="group-item ${activeChat === group.id && activeChatType === 'group' ? 'active' : ''}" 
+                 onclick="selectGroup('${group.id}', '${escapeHtml(group.name)}')">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">👥</span>
+                    <div style="flex:1;">
+                        <strong>${escapeHtml(group.name)}</strong>
+                        <div style="font-size:10px; color:#666;">${group.members.length} members</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+// Select group function
+function selectGroup(groupId, groupName) {
+    activeChat = groupId;
+    activeChatType = 'group';
+    document.getElementById('inputArea').style.display = 'flex';
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('chatTitle').innerHTML = `👥 ${groupName}`;
+    
+    // Load existing group messages
+    const group = groups.find(g => g.id === groupId);
+    if (group && group.messages) {
+        group.messages.forEach(msg => {
+            const isSent = msg.senderId === currentUser?.id;
+            const container = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `message ${msg.type === 'system' ? 'system' : (isSent ? 'sent' : 'received')}`;
+            div.innerHTML = `<strong>${msg.senderName || (isSent ? 'You' : 'User')}:</strong><br>${msg.content}<div style="font-size:10px; margin-top:5px;">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
+            container.appendChild(div);
+        });
+    }
+}
+
+// Override sendMessage to handle groups
+const originalSendMessage = sendMessage;
+window.sendMessage = function() {
+    const input = document.getElementById('messageInput');
+    const content = input.value.trim();
+    if (!content || !activeChat) return;
+    
+    if (activeChatType === 'user') {
+        const msg = {
+            senderId: currentUser.id,
+            senderName: currentUser.name,
+            receiverId: activeChat,
+            content: content
+        };
+        socket.emit('send-message', msg);
+        addMessage({ ...msg, sent: true });
+    } else if (activeChatType === 'group') {
+        socket.emit('send-group-message', {
+            groupId: activeChat,
+            senderId: currentUser.id,
+            senderName: currentUser.name,
+            content: content
+        });
+        // Don't add locally - wait for server echo
+    }
+    input.value = '';
+};
+
+// Handle group messages
+socket.on('group-message', (data) => {
+    if (activeChatType === 'group' && activeChat === data.groupId) {
+        const isSent = data.senderId === currentUser?.id;
+        const container = document.getElementById('messages');
+        if (container.innerHTML.includes('Select a user')) container.innerHTML = '';
+        
+        const div = document.createElement('div');
+        div.className = `message ${data.type === 'system' ? 'system' : (isSent ? 'sent' : 'received')}`;
+        const senderName = data.type === 'system' ? '' : `<strong>${data.senderName}:</strong><br>`;
+        div.innerHTML = `${senderName}${data.content}<div style="font-size:10px; margin-top:5px;">${new Date(data.timestamp).toLocaleTimeString()}</div>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+});
+
+// Add active class styling
+const style = document.createElement('style');
+style.textContent = `
+    .group-item.active {
+        background: #e3e8ff;
+        border-left: 3px solid #0084ff;
+    }
+    .message.system {
+        background: #e0e0e0;
+        color: #666;
+        font-size: 12px;
+        text-align: center;
+        margin: 10px auto;
+        max-width: 80%;
+    }
+`;
+document.head.appendChild(style);
+
+// Function to show group info
+function showGroupInfo() {
+    const group = groups.find(g => g.id === activeChat);
+    if (group) {
+        let membersList = group.members.map(m => `• ${m.name}${m.id === group.createdBy ? ' (Admin)' : ''}`).join('\n');
+        alert(`📋 Group: ${group.name}\n\nMembers (${group.members.length}):\n${membersList}`);
+    }
+}
+
+// Add group info button to header
+const header = document.querySelector('.chat-main .messages').previousElementSibling;
+if (header) {
+    const infoBtn = document.createElement('button');
+    infoBtn.innerHTML = 'ℹ️ Group Info';
+    infoBtn.style.cssText = 'padding:5px 10px; background:#0084ff; color:white; border:none; border-radius:5px; cursor:pointer; margin-left:10px;';
+    infoBtn.onclick = showGroupInfo;
+    infoBtn.style.display = 'none';
+    header.appendChild(infoBtn);
+    
+    // Show/hide group info button based on chat type
+    const originalSelectChat = selectChat;
+    window.selectChat = function(id, name, type) {
+        originalSelectChat(id, name, type);
+        if (infoBtn) infoBtn.style.display = type === 'group' ? 'inline-block' : 'none';
+    };
+}
+</script>
+
+<!-- Add Converter Button to Sidebar -->
+<div style="margin-top: 10px;">
+    <button onclick="window.location.href='/converter.html'" style="width:100%; padding:10px; background:#00bcd4; color:white; border:none; border-radius:10px; cursor:pointer;">
+        🔄 File Converter
+    </button>
+</div>
+
+<style>
+/* Group admin styles */
+.admin-badge {
+    background: #ff9800;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    margin-left: 5px;
+}
+.message-edited {
+    font-size: 9px;
+    opacity: 0.6;
+    font-style: italic;
+}
+.message-deleted {
+    opacity: 0.5;
+    font-style: italic;
+}
+.group-actions {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    display: none;
+    gap: 5px;
+}
+.message:hover .group-actions {
+    display: flex;
+}
+.group-action-btn {
+    background: #ddd;
+    border: none;
+    border-radius: 5px;
+    padding: 2px 5px;
+    cursor: pointer;
+    font-size: 10px;
+}
+.group-info-modal {
+    max-width: 400px;
+}
+.member-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+.member-actions button {
+    margin-left: 5px;
+    padding: 3px 8px;
+    font-size: 11px;
+}
+</style>
+
+<script>
+// Group management functions
+let currentGroup = null;
+
+function showGroupInfo() {
+    const group = groups.find(g => g.id === activeChat);
+    if (!group) return;
+    
+    currentGroup = group;
+    const isAdmin = group.admins?.includes(currentUser.id);
+    
+    let membersHtml = group.members.map(m => `
+        <div class="member-item">
+            <div>
+                <strong>${escapeHtml(m.name)}</strong>
+                ${group.admins?.includes(m.id) ? '<span class="admin-badge">Admin</span>' : ''}
+            </div>
+            ${isAdmin && m.id !== currentUser.id ? `
+                <div class="member-actions">
+                    <button onclick="makeAdmin('${m.id}')" style="background:#ff9800;">👑 Make Admin</button>
+                    <button onclick="removeMember('${m.id}', '${escapeHtml(m.name)}')" style="background:#f44336;">❌ Remove</button>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+    
+    const modalHtml = `
+        <div id="groupInfoModal" class="modal" style="display:flex">
+            <div class="modal-content group-info-modal">
+                <h3>👥 ${escapeHtml(group.name)}</h3>
+                <p><strong>Created by:</strong> ${escapeHtml(group.createdByName)}</p>
+                <p><strong>Members (${group.members.length}):</strong></p>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${membersHtml}
+                </div>
+                ${isAdmin ? `
+                    <div style="margin-top: 15px;">
+                        <h4>Add Member</h4>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="newMemberSelect" style="flex:1; padding:8px;">
+                                <option value="">Select user...</option>
+                                ${allUsers.filter(u => !group.members.find(m => m.id === u.id) && u.id !== currentUser.id).map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join('')}
+                            </select>
+                            <button onclick="addMemberToGroup()" style="background:#4caf50;">Add</button>
+                        </div>
+                    </div>
+                ` : ''}
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button onclick="closeGroupInfoModal()">Close</button>
+                    <button onclick="leaveGroup()" style="background:#f44336; color:white;">Leave Group</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('groupInfoModal');
+    if (existingModal) existingModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeGroupInfoModal() {
+    const modal = document.getElementById('groupInfoModal');
+    if (modal) modal.remove();
+}
+
+async function addMemberToGroup() {
+    const select = document.getElementById('newMemberSelect');
+    const memberId = select.value;
+    if (!memberId) return;
+    
+    const user = allUsers.find(u => u.id === memberId);
+    if (!user) return;
+    
+    socket.emit('add-group-member', {
+        groupId: activeChat,
+        adminId: currentUser.id,
+        newMemberId: memberId,
+        newMemberName: user.name
+    });
+    
+    closeGroupInfoModal();
+    setTimeout(() => showGroupInfo(), 500);
+}
+
+function makeAdmin(memberId) {
+    socket.emit('make-group-admin', {
+        groupId: activeChat,
+        adminId: currentUser.id,
+        memberId: memberId
+    });
+    closeGroupInfoModal();
+    setTimeout(() => showGroupInfo(), 500);
+}
+
+function removeMember(memberId, memberName) {
+    if (confirm(`Remove ${memberName} from the group?`)) {
+        socket.emit('remove-group-member', {
+            groupId: activeChat,
+            adminId: currentUser.id,
+            memberId: memberId,
+            memberName: memberName
+        });
+        closeGroupInfoModal();
+        setTimeout(() => showGroupInfo(), 500);
+    }
+}
+
+function leaveGroup() {
+    if (confirm('Are you sure you want to leave this group?')) {
+        socket.emit('leave-group', {
+            groupId: activeChat,
+            userId: currentUser.id,
+            userName: currentUser.name
+        });
+        closeGroupInfoModal();
+        activeChat = null;
+        activeChatType = null;
+        document.getElementById('inputArea').style.display = 'none';
+        document.getElementById('messages').innerHTML = '<div style="text-align:center; color:#999; padding:20px;">You left the group</div>';
+        updateGroupsList();
+    }
+}
+
+// Delete message function
+function deleteMessage(messageId, forEveryone = false) {
+    if (activeChatType === 'group') {
+        socket.emit('delete-group-message', {
+            groupId: activeChat,
+            messageId: messageId,
+            userId: currentUser.id,
+            forEveryone: forEveryone
+        });
+    }
+}
+
+// Edit message function
+function editMessage(messageId, currentContent) {
+    const newContent = prompt('Edit message:', currentContent);
+    if (newContent && newContent.trim()) {
+        if (activeChatType === 'group') {
+            socket.emit('edit-group-message', {
+                groupId: activeChat,
+                messageId: messageId,
+                userId: currentUser.id,
+                newContent: newContent.trim()
+            });
+        }
+    }
+}
+
+// Override addGroupMessage to show message actions
+const originalAddGroupMessage = addGroupMessage;
+window.addGroupMessage = function(msg) {
+    if (!msg) return;
+    
+    const container = document.getElementById('messages');
+    const isSent = msg.senderId === currentUser?.id;
+    const group = groups.find(g => g.id === activeChat);
+    const isAdmin = group?.admins?.includes(currentUser.id);
+    
+    if (container.innerHTML.includes('Select a user')) container.innerHTML = '';
+    
+    // Check if message is deleted for this user
+    if (msg.deletedFor?.includes(currentUser.id)) {
+        return; // Don't show if deleted for this user
+    }
+    
+    const div = document.createElement('div');
+    div.className = `message ${msg.type === 'system' ? 'system' : (isSent ? 'sent' : 'received')}`;
+    div.setAttribute('data-message-id', msg.id);
+    
+    let contentHtml = '';
+    if (msg.deleted) {
+        contentHtml = '<em>This message was deleted</em>';
+    } else {
+        contentHtml = msg.content;
+    }
+    
+    const canDelete = isSent || isAdmin;
+    const canEdit = isSent;
+    
+    div.innerHTML = `
+        <div class="message-bubble">
+            ${msg.type !== 'system' && !isSent ? `<strong>${msg.senderName}:</strong><br>` : ''}
+            ${contentHtml}
+            ${msg.edited ? '<div class="message-edited">(edited)</div>' : ''}
+            <div style="font-size:10px; margin-top:5px;">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+            <div class="group-actions">
+                ${canEdit ? `<button class="group-action-btn" onclick="editMessage('${msg.id}', '${escapeHtml(msg.content)}')">✏️</button>` : ''}
+                ${canDelete ? `<button class="group-action-btn" onclick="deleteMessage('${msg.id}', true)">🗑️</button>` : ''}
+                ${!canDelete && !canEdit && canDelete === false ? `<button class="group-action-btn" onclick="deleteMessage('${msg.id}', false)">🚫 Hide</button>` : ''}
+            </div>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+};
+
+// Socket event listeners for group actions
+socket.on('group-message-deleted', (data) => {
+    if (activeChat === data.groupId) {
+        const messageDiv = document.querySelector(`.message[data-message-id="${data.messageId}"]`);
+        if (messageDiv && data.deleted) {
+            messageDiv.querySelector('.message-bubble').innerHTML = '<em>This message was deleted</em>';
+        } else if (messageDiv && data.deletedFor?.includes(currentUser.id)) {
+            messageDiv.remove();
+        }
+    }
+});
+
+socket.on('group-message-edited', (data) => {
+    if (activeChat === data.groupId) {
+        const messageDiv = document.querySelector(`.message[data-message-id="${data.messageId}"]`);
+        if (messageDiv) {
+            const contentDiv = messageDiv.querySelector('.message-bubble');
+            contentDiv.innerHTML = contentDiv.innerHTML.replace(/<div class="message-bubble">[\s\S]*?<\/div>/, `<div class="message-bubble">${escapeHtml(data.newContent)}<div class="message-edited">(edited)</div><div style="font-size:10px; margin-top:5px;">${new Date().toLocaleTimeString()}</div><div class="group-actions">${contentDiv.querySelector('.group-actions')?.innerHTML || ''}</div></div>`);
+        }
+    }
+});
+
+socket.on('group-member-added', (data) => {
+    if (activeChat === data.groupId) {
+        addMessageToChat({
+            type: 'system',
+            content: `${data.newMember.name} joined the group`,
+            timestamp: Date.now()
+        });
+    }
+    updateGroupsList();
+});
+
+socket.on('group-member-removed', (data) => {
+    if (activeChat === data.groupId) {
+        addMessageToChat({
+            type: 'system',
+            content: `${data.removedMember} was removed from the group`,
+            timestamp: Date.now()
+        });
+    }
+    updateGroupsList();
+});
+
+socket.on('group-admin-updated', (data) => {
+    if (activeChat === data.groupId) {
+        addMessageToChat({
+            type: 'system',
+            content: `A new admin was appointed`,
+            timestamp: Date.now()
+        });
+    }
+    updateGroupsList();
+});
+
+// Update group list to show admin badge
+function updateGroupsList() {
+    const container = document.getElementById('groupsList');
+    const userGroups = groups.filter(g => g.members?.some(m => m.id === currentUser?.id));
+    
+    if (userGroups.length === 0) {
+        container.innerHTML = '<div style="color:#999; font-size:12px; text-align:center; padding:10px;">No groups yet. Create one!</div>';
+    } else {
+        container.innerHTML = userGroups.map(group => `
+            <div class="group-item ${activeChat === group.id && activeChatType === 'group' ? 'active' : ''}" 
+                 onclick="selectGroup('${group.id}', '${escapeHtml(group.name)}')">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">👥</span>
+                    <div style="flex:1;">
+                        <strong>${escapeHtml(group.name)}</strong>
+                        ${group.admins?.includes(currentUser.id) ? '<span class="admin-badge">Admin</span>' : ''}
+                        <div style="font-size:10px; color:#666;">${group.members.length} members</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+// Add group info button to header
+const header = document.querySelector('.chat-main .messages')?.previousElementSibling;
+if (header) {
+    const infoBtn = document.createElement('button');
+    infoBtn.innerHTML = 'ℹ️ Group Info';
+    infoBtn.style.cssText = 'padding:5px 10px; background:#0084ff; color:white; border:none; border-radius:5px; cursor:pointer; margin-left:10px; display:none;';
+    infoBtn.onclick = showGroupInfo;
+    header.appendChild(infoBtn);
+    
+    // Override selectGroup to show/hide info button
+    const originalSelectGroup = window.selectGroup;
+    window.selectGroup = function(groupId, groupName) {
+        originalSelectGroup(groupId, groupName);
+        if (infoBtn) infoBtn.style.display = activeChatType === 'group' ? 'inline-block' : 'none';
+    };
+}
+</script>
+✅ Advanced group features added to frontendcat
+
+<!-- Business Registration Modal -->
+<div id="businessModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3>🏪 Register Your Business</h3>
+        <div class="status-title">Business Information</div>
+        <input type="text" id="businessName" placeholder="Business Name (optional)">
+        <input type="text" id="legalName" placeholder="Legal Business Name *" required>
+        <input type="text" id="businessLocation" placeholder="Business Location (City, Country) *" required>
+        <textarea id="businessDesc" rows="3" placeholder="Business Description (optional)"></textarea>
+        <div class="status-title">Contact Information</div>
+        <input type="email" id="businessEmail" placeholder="Contact Email">
+        <input type="tel" id="businessPhone" placeholder="Contact Phone">
+        <div style="background: #fff3cd; padding: 10px; border-radius: 10px; margin: 10px 0; font-size: 12px;">
+            ⚠️ Legal business name and location are required for verification.
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="closeBusinessModal()">Cancel</button>
+            <button onclick="registerBusiness()" style="background: #4caf50; color: white;">Register Business</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Business registration functions
+function showBusinessRegistration() {
+    document.getElementById('businessModal').style.display = 'flex';
+}
+
+function closeBusinessModal() {
+    document.getElementById('businessModal').style.display = 'none';
+    // Clear form
+    document.getElementById('businessName').value = '';
+    document.getElementById('legalName').value = '';
+    document.getElementById('businessLocation').value = '';
+    document.getElementById('businessDesc').value = '';
+    document.getElementById('businessEmail').value = '';
+    document.getElementById('businessPhone').value = '';
+}
+
+async function registerBusiness() {
+    const legalName = document.getElementById('legalName').value.trim();
+    const location = document.getElementById('businessLocation').value.trim();
+    
+    if (!legalName || !location) {
+        alert('❌ Legal business name and location are required!');
+        return;
+    }
+    
+    const businessData = {
+        userId: currentUser.id,
+        businessName: document.getElementById('businessName').value.trim() || `${currentUser.name}'s Business`,
+        legalName: legalName,
+        location: location,
+        description: document.getElementById('businessDesc').value.trim(),
+        contactEmail: document.getElementById('businessEmail').value.trim(),
+        contactPhone: document.getElementById('businessPhone').value.trim()
+    };
+    
+    const response = await fetch('/api/business/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(businessData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+        alert(`✅ Business "${result.business.businessName}" registered successfully!\n\nYour business is pending verification. You can now add products.`);
+        closeBusinessModal();
+        // Refresh page to show business options
+        setTimeout(() => window.location.reload(), 1000);
+    } else {
+        alert('❌ Registration failed: ' + result.error);
+    }
+}
+
+// Check if user has business and show appropriate UI
+async function checkUserBusiness() {
+    const response = await fetch(`/api/business/${currentUser.id}`);
+    const business = await response.json();
+    
+    if (business) {
+        // User has business - show business dashboard link
+        const businessBtn = document.querySelector('button[onclick="showBusinessRegistration()"]');
+        if (businessBtn) {
+            businessBtn.innerHTML = '🏪 My Business Dashboard';
+            businessBtn.onclick = () => window.location.href = '/marketplace.html';
+            businessBtn.style.background = '#4caf50';
+        }
+    }
+}
+
+// Call after login
+setTimeout(() => {
+    if (currentUser) checkUserBusiness();
+}, 1000);
+</script>

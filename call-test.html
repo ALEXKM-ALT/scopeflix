@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Call Test</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 500px;
+        }
+        input, button {
+            padding: 12px;
+            margin: 10px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background: #0084ff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        .video-container {
+            margin-top: 20px;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🎥 Video Call Test</h2>
+        <input type="text" id="roomName" placeholder="Room Name">
+        <button onclick="joinRoom()">Join Room</button>
+        
+        <div id="videoArea" style="display:none; margin-top:20px;">
+            <video id="localVideo" autoplay muted playsinline style="width:100%"></video>
+            <video id="remoteVideo" autoplay playsinline style="width:100%; margin-top:10px;"></video>
+            <div style="margin-top:20px;">
+                <button onclick="toggleMic()">🎤 Mute</button>
+                <button onclick="toggleVideo()">📹 Video</button>
+                <button onclick="hangUp()">🔴 End Call</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let localStream = null;
+        let peerConnection = null;
+        let currentRoom = null;
+        const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        
+        async function joinRoom() {
+            const room = document.getElementById('roomName').value;
+            if (!room) return;
+            
+            currentRoom = room;
+            socket.emit('join-room', room);
+            document.getElementById('videoArea').style.display = 'block';
+            
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        
+        socket.on('user-connected', (userId) => {
+            createOffer(userId);
+        });
+        
+        async function createOffer(userId) {
+            peerConnection = new RTCPeerConnection(configuration);
+            
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
+            peerConnection.ontrack = (event) => {
+                document.getElementById('remoteVideo').srcObject = event.streams[0];
+            };
+            
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice-candidate', { candidate: event.candidate, to: userId });
+                }
+            };
+            
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('offer', { offer: offer, to: userId });
+        }
+        
+        function toggleMic() {
+            const audioTrack = localStream?.getAudioTracks()[0];
+            if (audioTrack) audioTrack.enabled = !audioTrack.enabled;
+        }
+        
+        function toggleVideo() {
+            const videoTrack = localStream?.getVideoTracks()[0];
+            if (videoTrack) videoTrack.enabled = !videoTrack.enabled;
+        }
+        
+        function hangUp() {
+            if (peerConnection) peerConnection.close();
+            socket.emit('leave-room', currentRoom);
+            document.getElementById('videoArea').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

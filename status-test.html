@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Status Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: linear-gradient(135deg, #667eea, #764ba2); }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 20px; margin: 10px 0; }
+        button { background: #0084ff; color: white; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; }
+        .status-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 15px; margin: 10px 0; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>📸 Status Test</h2>
+            <input type="text" id="userName" placeholder="Your Name" value="Tester">
+            <button onclick="login()">Login</button>
+        </div>
+        
+        <div id="statusArea" style="display:none">
+            <div class="card">
+                <textarea id="statusMsg" placeholder="What's on your mind?"></textarea>
+                <button onclick="postStatus()">Post Status</button>
+            </div>
+            <div id="statusList"></div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentUser = null;
+        
+        function login() {
+            const name = document.getElementById('userName').value;
+            if (name) {
+                currentUser = {
+                    id: Date.now().toString(),
+                    name: name,
+                    avatar: name[0].toUpperCase()
+                };
+                socket.emit('user-join', currentUser);
+                document.getElementById('statusArea').style.display = 'block';
+                document.querySelector('.card').style.display = 'none';
+            }
+        }
+        
+        socket.on('existing-statuses', (statuses) => {
+            displayStatuses(statuses);
+        });
+        
+        socket.on('new-status', (status) => {
+            getAllStatuses();
+        });
+        
+        function getAllStatuses() {
+            fetch('/api/statuses')
+                .then(res => res.json())
+                .then(displayStatuses);
+        }
+        
+        function displayStatuses(statuses) {
+            const container = document.getElementById('statusList');
+            if (!statuses || statuses.length === 0) {
+                container.innerHTML = '<div class="card">No statuses yet</div>';
+                return;
+            }
+            container.innerHTML = statuses.map(s => `
+                <div class="status-card">
+                    <div style="font-size: 40px;">${s.userAvatar}</div>
+                    <h3>${s.userName}</h3>
+                    <p>${s.content}</p>
+                    <small>${new Date(s.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+        
+        function postStatus() {
+            const content = document.getElementById('statusMsg').value;
+            if (!content) return;
+            
+            socket.emit('post-status', {
+                userId: currentUser.id,
+                userName: currentUser.name,
+                userAvatar: currentUser.avatar,
+                type: 'text',
+                content: content,
+                backgroundColor: '#667eea'
+            });
+            document.getElementById('statusMsg').value = '';
+            alert('Status posted!');
+        }
+    </script>
+</body>
+</html>

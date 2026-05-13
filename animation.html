@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scopeflix AI Animation Studio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .create-form {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .create-form textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            margin: 15px 0;
+            resize: vertical;
+        }
+        .actors-section {
+            margin: 20px 0;
+        }
+        .actor-input {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .actor-input input, .actor-input select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        .actor-input input { flex: 2; }
+        .actor-input select { flex: 1; }
+        .actor-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .actor-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .style-options {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .style-card {
+            flex: 1;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .style-card:hover { transform: translateY(-5px); }
+        .style-card.selected {
+            border-color: #667eea;
+            background: #e3e8ff;
+        }
+        .style-card .emoji { font-size: 40px; margin-bottom: 10px; }
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+        .animations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .animation-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .animation-preview {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+        .animation-info {
+            padding: 15px;
+        }
+        .animation-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .animation-meta {
+            font-size: 11px;
+            color: #666;
+            margin: 10px 0;
+        }
+        .animation-actions {
+            display: flex;
+            gap: 15px;
+            padding: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .animation-action {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .back-btn {
+            display: inline-block;
+            margin: 20px;
+            background: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 AI Animation Studio</h1>
+        <p>Turn your stories into animated videos with AI</p>
+    </div>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('create')">✨ Create Story</button>
+            <button class="tab" onclick="showTab('my')">📽️ My Animations</button>
+            <button class="tab" onclick="showTab('feed')">🔥 Trending</button>
+        </div>
+        
+        <!-- Create Tab -->
+        <div id="createTab">
+            <div class="create-form">
+                <h3>Write Your Story</h3>
+                <textarea id="storyText" rows="6" placeholder="Once upon a time... Write your story here and AI will bring it to life!&#10;&#10;Example:&#10;A brave knight named Sir Leo entered the dark forest. He found a magical sword glowing with blue light. The dragon appeared breathing fire. Sir Leo bravely faced the dragon and saved the kingdom."></textarea>
+                
+                <div class="actors-section">
+                    <h4>🎭 Characters (Actors)</h4>
+                    <div id="actorsList" class="actor-list"></div>
+                    <div class="actor-input">
+                        <input type="text" id="actorName" placeholder="Character name">
+                        <select id="actorVoice">
+                            <option value="male">👨 Male Voice</option>
+                            <option value="female">👩 Female Voice</option>
+                            <option value="child">🧒 Child Voice</option>
+                            <option value="robot">🤖 Robot Voice</option>
+                        </select>
+                        <button onclick="addActor()">+ Add</button>
+                    </div>
+                </div>
+                
+                <h4>🎨 Animation Style</h4>
+                <div class="style-options">
+                    <div class="style-card" onclick="selectStyle('modern')">
+                        <div class="emoji">🎨</div>
+                        <div>Modern</div>
+                    </div>
+                    <div class="style-card" onclick="selectStyle('cartoon')">
+                        <div class="emoji">🐱</div>
+                        <div>Cartoon</div>
+                    </div>
+                    <div class="style-card" onclick="selectStyle('cinematic')">
+                        <div class="emoji">🎬</div>
+                        <div>Cinematic</div>
+                    </div>
+                    <div class="style-card" onclick="selectStyle('anime')">
+                        <div class="emoji">🗾</div>
+                        <div>Anime</div>
+                    </div>
+                </div>
+                
+                <div id="progressArea" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <p id="progressText" style="text-align:center; color:#666;">Processing...</p>
+                </div>
+                
+                <button class="generate-btn" onclick="generateAnimation()">🎬 Generate Animation with AI</button>
+            </div>
+        </div>
+        
+        <!-- My Animations Tab -->
+        <div id="myTab" style="display: none;">
+            <div id="myAnimations" class="animations-grid"></div>
+        </div>
+        
+        <!-- Feed Tab -->
+        <div id="feedTab" style="display: none;">
+            <div id="feedAnimations" class="animations-grid"></div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin: 20px;">
+        <a href="/chat.html"><button class="back-btn">← Back to Chat</button></a>
+        <a href="/marketplace.html"><button>🛍️ Marketplace</button></a>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentUser = null;
+        let actors = [];
+        let selectedStyle = 'modern';
+        let currentAnimations = [];
+        
+        const saved = localStorage.getItem('user');
+        if (!saved) {
+            alert('Please login from chat first');
+            window.location.href = '/chat.html';
+        } else {
+            currentUser = JSON.parse(saved);
+            loadMyAnimations();
+        }
+        
+        function addActor() {
+            const name = document.getElementById('actorName').value.trim();
+            const voice = document.getElementById('actorVoice').value;
+            if (name) {
+                actors.push({ name, voice });
+                updateActorsList();
+                document.getElementById('actorName').value = '';
+            }
+        }
+        
+        function updateActorsList() {
+            const container = document.getElementById('actorsList');
+            container.innerHTML = actors.map((a, i) => `
+                <span class="actor-tag">🎭 ${a.name} (${a.voice}) <span onclick="removeActor(${i})" style="cursor:pointer;">✖</span></span>
+            `).join('');
+        }
+        
+        function removeActor(index) {
+            actors.splice(index, 1);
+            updateActorsList();
+        }
+        
+        function selectStyle(style) {
+            selectedStyle = style;
+            document.querySelectorAll('.style-card').forEach(card => card.classList.remove('selected'));
+            event.target.closest('.style-card').classList.add('selected');
+        }
+        
+        async function generateAnimation() {
+            const story = document.getElementById('storyText').value.trim();
+            if (!story) {
+                alert('Please write a story first!');
+                return;
+            }
+            
+            const progressArea = document.getElementById('progressArea');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressArea.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.innerHTML = '🎨 AI is analyzing your story...';
+            
+            const response = await fetch('/api/animation/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    story: story,
+                    userId: currentUser.id,
+                    userName: currentUser.name,
+                    actors: actors,
+                    style: selectedStyle,
+                    duration: 3
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                progressText.innerHTML = '✨ AI is creating your animation...';
+                
+                // Listen for progress updates
+                socket.on('animation-progress', (data) => {
+                    if (data.id === result.animation.id) {
+                        progressFill.style.width = data.progress + '%';
+                        progressText.innerHTML = `🎬 Generating scenes... ${data.progress}%`;
+                    }
+                });
+                
+                socket.on('animation-completed', (animation) => {
+                    if (animation.id === result.animation.id) {
+                        progressText.innerHTML = '✅ Animation complete!';
+                        setTimeout(() => {
+                            progressArea.style.display = 'none';
+                            loadMyAnimations();
+                            showTab('my');
+                        }, 1500);
+                    }
+                });
+            } else {
+                alert('Error: ' + result.error);
+                progressArea.style.display = 'none';
+            }
+        }
+        
+        async function loadMyAnimations() {
+            const response = await fetch(`/api/animations/user/${currentUser.id}`);
+            const animations = await response.json();
+            currentAnimations = animations;
+            displayAnimations(animations, 'myAnimations', true);
+        }
+        
+        async function loadFeed() {
+            const response = await fetch('/api/animations/feed');
+            const animations = await response.json();
+            displayAnimations(animations, 'feedAnimations', false);
+        }
+        
+        function displayAnimations(animations, containerId, showActions) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            if (animations.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">No animations yet. Create your first one!</div>';
+                return;
+            }
+            
+            container.innerHTML = animations.map(anim => `
+                <div class="animation-card">
+                    <div class="animation-preview">
+                        ${anim.status === 'completed' ? '🎬 Ready!' : '⏳ Processing...'}
+                    </div>
+                    <div class="animation-info">
+                        <div class="animation-title">${escapeHtml(anim.story.substring(0, 80))}...</div>
+                        <div class="animation-meta">
+                            🎭 ${anim.actors.length} characters | ${new Date(anim.createdAt).toLocaleDateString()}
+                        </div>
+                        ${anim.status === 'processing' ? `<div class="progress-bar"><div class="progress-fill" style="width:${anim.progress || 0}%"></div></div>` : ''}
+                    </div>
+                    <div class="animation-actions">
+                        ${anim.status === 'completed' ? `<div class="animation-action" onclick="viewAnimation('${anim.id}')">👁️ View</div>` : ''}
+                        <div class="animation-action" onclick="likeAnimation('${anim.id}')">❤️ ${anim.likes}</div>
+                        ${showActions && anim.status === 'completed' ? `<div class="animation-action" onclick="shareAnimation('${anim.id}')">📤 Share</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function viewAnimation(animationId) {
+            const anim = currentAnimations.find(a => a.id === animationId);
+            if (anim) {
+                alert(`🎬 ${anim.story}\n\nActors: ${anim.actors.map(a => a.name).join(', ')}\nStyle: ${anim.style}\n\nThis would play the animated video in production.`);
+            }
+        }
+        
+        async function likeAnimation(animationId) {
+            await fetch('/api/animation/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ animationId, userId: currentUser.id })
+            });
+            loadFeed();
+        }
+        
+        async function shareAnimation(animationId) {
+            const response = await fetch('/api/animation/share', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ animationId, userId: currentUser.id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('✨ Animation shared to your status!');
+            }
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('createTab').style.display = tab === 'create' ? 'block' : 'none';
+            document.getElementById('myTab').style.display = tab === 'my' ? 'block' : 'none';
+            document.getElementById('feedTab').style.display = tab === 'feed' ? 'block' : 'none';
+            
+            if (tab === 'my') loadMyAnimations();
+            if (tab === 'feed') loadFeed();
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
